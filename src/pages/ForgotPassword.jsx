@@ -1,9 +1,12 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-export default function ForgotPassword({ setPage }) {
+export default function ForgotPassword() {
+
+  const navigate = useNavigate();
+
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
-  const [generatedOtp, setGeneratedOtp] = useState("");
   const [otpVerified, setOtpVerified] = useState(false);
 
   const [newPass, setNewPass] = useState("");
@@ -12,48 +15,70 @@ export default function ForgotPassword({ setPage }) {
   const [showNewPass, setShowNewPass] = useState(false);
   const [showConfirmPass, setShowConfirmPass] = useState(false);
 
-  const sendOtp = () => {
-    const storedUser = JSON.parse(localStorage.getItem("signupUser"));
+  // ================= SEND OTP =================
+  const sendOtp = async () => {
 
-    if (!email) {
+    const cleanEmail = email.trim().toLowerCase();
+
+    if (!cleanEmail) {
       alert("Please enter email first");
       return;
     }
 
-    if (!storedUser) {
-      alert("No user found! Please Signup first");
-      setPage("signup");
-      return;
+    try {
+      const res = await fetch(
+        `http://localhost:8080/auth/forgot-password/send/${cleanEmail}`,
+        { method: "POST" }
+      );
+
+      if (!res.ok) {
+        const msg = await res.text();
+        alert(msg || "This email is not registered!");
+        return;
+      }
+
+      alert("OTP sent to your email 📧");
+
+    } catch {
+      alert("Server error while sending OTP");
     }
-
-    if (email !== storedUser.email) {
-      alert("This email is not registered!");
-      return;
-    }
-
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    setGeneratedOtp(code);
-
-    localStorage.setItem(
-      "forgotPasswordData",
-      JSON.stringify({ email: email, otp: code })
-    );
-
-    alert("OTP Sent! (Check Console)");
-    console.log("OTP:", code);
   };
 
-  const verifyOtp = () => {
-    if (otp === generatedOtp && otp !== "") {
+  // ================= VERIFY OTP =================
+  const verifyOtp = async () => {
+
+    const cleanEmail = email.trim().toLowerCase();
+
+    if (!otp) {
+      alert("Enter OTP");
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        `http://localhost:8080/auth/forgot-password/verify?email=${cleanEmail}&otp=${otp}`,
+        { method: "POST" }
+      );
+
+      if (!res.ok) {
+        const msg = await res.text();
+        alert(msg || "Invalid OTP");
+        return;
+      }
+
       setOtpVerified(true);
       alert("OTP Verified Successfully!");
-    } else {
-      alert("Invalid OTP");
+
+    } catch {
+      alert("Server error while verifying OTP");
     }
   };
 
-  const handleSubmit = (e) => {
+  // ================= RESET PASSWORD =================
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const cleanEmail = email.trim().toLowerCase();
 
     if (!otpVerified) {
       alert("Please verify OTP first");
@@ -65,7 +90,6 @@ export default function ForgotPassword({ setPage }) {
       return;
     }
 
-    // PASSWORD VALIDATION
     const passRegex = /^(?=.*[!@#$%^&*])[A-Z][A-Za-z0-9!@#$%^&*]{7,}$/;
 
     if (!passRegex.test(newPass)) {
@@ -80,13 +104,31 @@ export default function ForgotPassword({ setPage }) {
       return;
     }
 
-    const storedUser = JSON.parse(localStorage.getItem("signupUser"));
-    storedUser.password = newPass;
+    try {
+      const res = await fetch(
+        `http://localhost:8080/auth/forgot-password/reset/${cleanEmail}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            password: newPass,
+            repeatPassword: confirmPass
+          })
+        }
+      );
 
-    localStorage.setItem("signupUser", JSON.stringify(storedUser));
+      if (!res.ok) {
+        const msg = await res.text();
+        alert(msg || "Password reset failed");
+        return;
+      }
 
-    alert("Password Reset Successful 🎉");
-    setPage("signin");
+      alert("Password Reset Successful 🎉");
+      navigate("/signin");
+
+    } catch {
+      alert("Server error while resetting password");
+    }
   };
 
   return (
@@ -96,7 +138,7 @@ export default function ForgotPassword({ setPage }) {
         <Header />
 
         <form className="space-y-4" onSubmit={handleSubmit}>
-          
+
           <Input
             label="Email Address"
             type="email"
@@ -127,57 +169,35 @@ export default function ForgotPassword({ setPage }) {
             Verify OTP
           </button>
 
-          {/* NEW PASSWORD WITH EYE ICON */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              New Password
-            </label>
-            <div className="relative">
-              <input
-                type={showNewPass ? "text" : "password"}
-                disabled={!otpVerified}
-                value={newPass}
-                onChange={(e) => setNewPass(e.target.value)}
-                className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-pink-400 disabled:bg-gray-200"
-              />
-              <span
-                className="absolute right-3 top-2 cursor-pointer text-sm"
-                onClick={() => setShowNewPass(!showNewPass)}
-              >
-                {showNewPass ? "👁️" : "🙈"}
-              </span>
-            </div>
-          </div>
+          <PasswordInput
+            label="New Password"
+            value={newPass}
+            onChange={setNewPass}
+            show={showNewPass}
+            setShow={setShowNewPass}
+            disabled={!otpVerified}
+          />
 
-          {/* CONFIRM PASSWORD WITH EYE ICON */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Confirm Password
-            </label>
-            <div className="relative">
-              <input
-                type={showConfirmPass ? "text" : "password"}
-                disabled={!otpVerified}
-                value={confirmPass}
-                onChange={(e) => setConfirmPass(e.target.value)}
-                className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-pink-400 disabled:bg-gray-200"
-              />
-              <span
-                className="absolute right-3 top-2 cursor-pointer text-sm"
-                onClick={() => setShowConfirmPass(!showConfirmPass)}
-              >
-                {showConfirmPass ? "👁️" : "🙈"}
-              </span>
-            </div>
-          </div>
+          <PasswordInput
+            label="Confirm Password"
+            value={confirmPass}
+            onChange={setConfirmPass}
+            show={showConfirmPass}
+            setShow={setShowConfirmPass}
+            disabled={!otpVerified}
+          />
 
           <button className="w-full bg-pink-600 text-white py-2.5 rounded-xl">
             Reset Password
           </button>
+
         </form>
 
         <p className="text-center mt-4">
-          <button onClick={() => setPage("signin")} className="text-pink-600 font-semibold">
+          <button
+            onClick={() => navigate("/signin")}
+            className="text-pink-600 font-semibold hover:underline"
+          >
             Back to Sign In
           </button>
         </p>
@@ -187,30 +207,69 @@ export default function ForgotPassword({ setPage }) {
   );
 }
 
+/* ---------- UI Components ---------- */
+
 function Header() {
   return (
     <div className="text-center mb-6">
-      <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-pink-500 via-pink-600 to-rose-500 
+      <div className="relative w-20 h-20 rounded-full bg-gradient-to-br 
+        from-pink-500 via-pink-600 to-rose-500 
         flex items-center justify-center shadow-xl ring-4 ring-pink-200 mx-auto mb-3">
-        <span className="absolute text-white text-3xl font-extrabold -translate-x-2">G</span>
-        <span className="absolute text-white text-3xl font-extrabold translate-x-2">C</span>
+
+        <span className="absolute text-white text-3xl font-extrabold -translate-x-2">
+          G
+        </span>
+        <span className="absolute text-white text-3xl font-extrabold translate-x-2">
+          C
+        </span>
       </div>
-      <h1 className="text-2xl font-bold text-pink-600">Forgot Password</h1>
+
+      <h1 className="text-2xl font-bold text-pink-600">
+        Forgot Password
+      </h1>
     </div>
   );
 }
 
-function Input({ label, type, value, onChange, disabled }) {
+function Input({ label, type, value, onChange }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        {label}
+      </label>
       <input
         type={type}
         value={value}
-        disabled={disabled}
         onChange={onChange}
-        className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-pink-400 disabled:bg-gray-200"
+        className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-pink-400"
       />
+    </div>
+  );
+}
+
+function PasswordInput({ label, value, onChange, show, setShow, disabled }) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        {label}
+      </label>
+
+      <div className="relative">
+        <input
+          type={show ? "text" : "password"}
+          value={value}
+          disabled={disabled}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-pink-400 disabled:bg-gray-200"
+        />
+
+        <span
+          className="absolute right-3 top-2 cursor-pointer text-sm"
+          onClick={() => setShow(!show)}
+        >
+          {show ? "👁️" : "🙈"}
+        </span>
+      </div>
     </div>
   );
 }

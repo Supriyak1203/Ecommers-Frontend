@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-export default function Signup({ setPage }) {
+export default function Signup() {
+  const navigate = useNavigate();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -11,7 +13,6 @@ export default function Signup({ setPage }) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  // Error States
   const [nameError, setNameError] = useState("");
   const [emailError, setEmailError] = useState("");
   const [passError, setPassError] = useState("");
@@ -58,21 +59,18 @@ export default function Signup({ setPage }) {
       return;
     }
 
-    // 🔹 BACKEND API CALL
     try {
       const response = await fetch("http://localhost:8080/auth/signup", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           fullName: name,
-          email: email,
+          email,
           mobileNumber: mobile,
-          password: password,
+          password,
           confirmPassword: confirm,
-          role: "USER"
-        })
+          role: "USER",
+        }),
       });
 
       if (!response.ok) {
@@ -81,7 +79,7 @@ export default function Signup({ setPage }) {
       }
 
       alert("Signup Successful 🎉");
-      setPage("signin");
+      navigate("/signin"); // ✅ Navigate to sign-in page
 
     } catch (error) {
       alert(error.message);
@@ -91,20 +89,17 @@ export default function Signup({ setPage }) {
   return (
     <section className="flex items-center justify-center min-h-screen pt-24">
       <div className="bg-white w-full max-w-md p-8 rounded-2xl shadow-lg border border-pink-100">
-
         <div className="text-center mb-6">
           <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-pink-500 via-pink-600 to-rose-500 
             flex items-center justify-center shadow-xl ring-4 ring-pink-200 mx-auto mb-3">
             <span className="absolute text-white text-3xl font-extrabold -translate-x-2">G</span>
             <span className="absolute text-white text-3xl font-extrabold translate-x-2">C</span>
           </div>
-
           <h1 className="text-3xl font-extrabold text-pink-600">GlowCosmetic</h1>
           <p className="text-gray-500 text-sm mt-1">Create your beauty account ✨</p>
         </div>
 
         <form className="space-y-4" onSubmit={handleSignup}>
-
           <Input label="Full Name" value={name} onChange={(e)=>{ setName(e.target.value); setNameError(""); }} />
           {nameError && <p className="text-red-500 text-xs">{nameError}</p>}
 
@@ -114,7 +109,6 @@ export default function Signup({ setPage }) {
           <Input label="Mobile Number" value={mobile} onChange={(e)=>{ setMobile(e.target.value); setMobileError(""); }} />
           {mobileError && <p className="text-red-500 text-xs">{mobileError}</p>}
 
-          {/* PASSWORD */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
             <div className="relative">
@@ -131,7 +125,6 @@ export default function Signup({ setPage }) {
           </div>
           {passError && <p className="text-red-500 text-xs">{passError}</p>}
 
-          {/* CONFIRM PASSWORD */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
             <div className="relative">
@@ -154,11 +147,10 @@ export default function Signup({ setPage }) {
 
         <p className="text-center text-sm text-gray-600 mt-5">
           Already have an account?
-          <button onClick={() => setPage("signin")} className="text-pink-600 font-semibold hover:underline">
+          <button onClick={() => navigate("/signin")} className="text-pink-600 font-semibold hover:underline">
             {" "}Sign In
           </button>
         </p>
-
       </div>
     </section>
   );

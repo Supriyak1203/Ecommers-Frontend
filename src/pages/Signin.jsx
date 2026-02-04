@@ -1,6 +1,9 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-export default function Signin({ setPage }) {
+export default function Signin({ setRole, setFullName }) {
+
+  const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,17 +21,11 @@ export default function Signin({ setPage }) {
     try {
       const response = await fetch("http://localhost:8080/auth/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          email: email,
-          password: password
-        })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
       });
 
       if (!response.ok) {
-        // backend should return 401 for invalid login
         setEmailError("Incorrect Email or Password!");
         setPasswordError("Incorrect Email or Password!");
         return;
@@ -36,45 +33,44 @@ export default function Signin({ setPage }) {
 
       const data = await response.json();
 
-      // ✅ Save auth data (NO CHANGE)
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("userId", data.userId);
-      localStorage.setItem("role", data.role);
-      localStorage.setItem("fullName", data.fullName);
+localStorage.setItem("email", data.email);
+localStorage.setItem("fullName", data.fullName);
+localStorage.setItem("userId", data.userId);
+localStorage.setItem("token", data.token);
+localStorage.setItem("role", data.role);
+
+
+      setRole(data.role);
+      setFullName(data.fullName);
 
       alert("Login Successful 🎉");
 
-      // ✅ RECOMMENDED CHANGE (redirect to welcome)
-      setPage("welcome");
-
-      // 🔒 keep this for future role-based routing
-      /*
-      if (data.role === "USER") {
-        setPage("home");
-      } else if (data.role === "ADMIN") {
-        setPage("admin");
+      // 🚀 Router redirect
+      if (data.role === "ADMIN") {
+        navigate("/admin");
+      } else {
+        navigate("/");
       }
-      */
 
     } catch (error) {
+      console.error(error);
       alert("Server error. Please try again later.");
     }
   };
 
   return (
-    <section className="flex items-center justify-center min-h-screen pt-24">
+    <section className="flex items-center justify-center min-h-screen pt-24 bg-pink-50">
       <div className="bg-white w-full max-w-md p-8 rounded-2xl shadow-lg border border-pink-100">
 
         <Header title="Sign In" />
 
         <form className="space-y-4" onSubmit={handleSignin}>
-          
-          {/* EMAIL */}
-          <Input 
-            label="Email Address" 
+
+          <Input
+            label="Email Address"
             type="email"
             value={email}
-            onChange={(e)=>{
+            onChange={(e) => {
               setEmail(e.target.value);
               setEmailError("");
             }}
@@ -82,8 +78,7 @@ export default function Signin({ setPage }) {
           {emailError && (
             <p className="text-red-500 text-xs mt-1">{emailError}</p>
           )}
-          
-          {/* PASSWORD */}
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Password
@@ -93,7 +88,7 @@ export default function Signin({ setPage }) {
               <input
                 type={showPassword ? "text" : "password"}
                 value={password}
-                onChange={(e)=>{
+                onChange={(e) => {
                   setPassword(e.target.value);
                   setPasswordError("");
                 }}
@@ -102,9 +97,9 @@ export default function Signin({ setPage }) {
 
               <span
                 className="absolute right-3 top-2 cursor-pointer text-sm"
-                onClick={()=>setShowPassword(!showPassword)}
+                onClick={() => setShowPassword(!showPassword)}
               >
-                {showPassword ? "👁️" : "🙈"}
+                {showPassword ? "🙈" : "👁️"}
               </span>
             </div>
 
@@ -113,17 +108,23 @@ export default function Signin({ setPage }) {
             )}
           </div>
 
-          <button className="w-full bg-pink-600 text-white py-2.5 rounded-xl font-semibold">
+          <button className="w-full bg-pink-600 text-white py-2.5 rounded-xl font-semibold hover:bg-pink-700 transition">
             Sign In
           </button>
         </form>
 
         <div className="flex justify-between mt-4 text-sm">
-          <button onClick={() => setPage("forgot")} className="text-pink-600 hover:underline">
+          <button
+            onClick={() => navigate("/forgot")}
+            className="text-pink-600 hover:underline"
+          >
             Forgot Password?
           </button>
 
-          <button onClick={() => setPage("signup")} className="text-pink-600 hover:underline">
+          <button
+            onClick={() => navigate("/signup")}
+            className="text-pink-600 hover:underline"
+          >
             Create Account
           </button>
         </div>
@@ -133,13 +134,20 @@ export default function Signin({ setPage }) {
   );
 }
 
+/* ---------- UI COMPONENTS ---------- */
+
 function Header({ title }) {
   return (
     <div className="text-center mb-6">
-      <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-pink-500 via-pink-600 to-rose-500 
+      <div className="relative w-20 h-20 rounded-full bg-gradient-to-br 
+        from-pink-500 via-pink-600 to-rose-500 
         flex items-center justify-center shadow-xl ring-4 ring-pink-200 mx-auto mb-3">
-        <span className="absolute text-white text-3xl font-extrabold -translate-x-2">G</span>
-        <span className="absolute text-white text-3xl font-extrabold translate-x-2">C</span>
+        <span className="absolute text-white text-3xl font-extrabold -translate-x-2">
+          G
+        </span>
+        <span className="absolute text-white text-3xl font-extrabold translate-x-2">
+          C
+        </span>
       </div>
       <h1 className="text-3xl font-extrabold text-pink-600">{title}</h1>
     </div>
@@ -149,7 +157,9 @@ function Header({ title }) {
 function Input({ label, type, value, onChange }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        {label}
+      </label>
       <input
         type={type}
         value={value}
