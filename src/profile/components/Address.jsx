@@ -1,6 +1,9 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
 
+/* ✅ GLOBAL BACKEND URL */
+import BASE_URL from "../../config/api";
+
 export default function Address() {
   const userId = localStorage.getItem("userId");
   const token = localStorage.getItem("token");
@@ -20,9 +23,9 @@ export default function Address() {
   useEffect(() => {
     const loadUserAndAddress = async () => {
       try {
-        // 🔵 FETCH USER TABLE
+        // 🔵 FETCH USER
         const userRes = await axios.get(
-          `http://localhost:8080/api/users/${userId}`,
+          `${BASE_URL}/api/users/${userId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -30,11 +33,9 @@ export default function Address() {
           }
         );
 
-        console.log("USER API RESPONSE:", userRes.data);
-
-        // 🔵 FETCH ADDRESS TABLE
+        // 🔵 FETCH ADDRESS
         const addrRes = await axios.get(
-          `http://localhost:8080/address/${userId}`,
+          `${BASE_URL}/address/${userId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -44,23 +45,15 @@ export default function Address() {
 
         const user = userRes.data || {};
         const addresses = addrRes.data || [];
-
         const latest = addresses.length > 0 ? addresses[0] : null;
 
-        // 🔥 SAFE FIELD MAPPING
         const fullName =
-          user.fullName ||
-          user.name ||
-          user.username ||
-          "";
+          user.fullName || user.name || user.username || "";
 
         const mobile =
-          user.mobileNumber ||
-          user.mobile ||
-          user.phone ||
-          "";
+          user.mobileNumber || user.mobile || user.phone || "";
 
-        // 👉 autofill name + mobile
+        // Autofill name + mobile
         setAddr({
           name: fullName,
           mobile: mobile,
@@ -70,7 +63,7 @@ export default function Address() {
           pincode: "",
         });
 
-        // 👉 saved card
+        // Saved address card
         if (latest) {
           setSavedAddress({
             name: fullName,
@@ -81,7 +74,6 @@ export default function Address() {
             pincode: latest.pincode,
           });
         }
-
       } catch (err) {
         console.error("Load address error:", err);
       }
@@ -105,7 +97,7 @@ export default function Address() {
     };
 
     try {
-      await axios.post("http://localhost:8080/address/add", payload, {
+      await axios.post(`${BASE_URL}/address/add`, payload, {
         headers: {
           Authorization: `Bearer ${token}`,
           userId: userId,
@@ -114,9 +106,9 @@ export default function Address() {
 
       alert("✅ Address Saved Successfully");
 
-      // reload latest address
+      // Reload latest address
       const addrRes = await axios.get(
-        `http://localhost:8080/address/${userId}`,
+        `${BASE_URL}/address/${userId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -135,7 +127,7 @@ export default function Address() {
         pincode: latest.pincode,
       });
 
-      // clear only address inputs
+      // Clear only address fields
       setAddr((prev) => ({
         ...prev,
         line: "",
@@ -143,7 +135,6 @@ export default function Address() {
         state: "",
         pincode: "",
       }));
-
     } catch (err) {
       console.error("Error saving address", err);
       alert("❌ Failed to save address");
@@ -161,7 +152,8 @@ export default function Address() {
           <br />
           {savedAddress.line}
           <br />
-          {savedAddress.city}, {savedAddress.state} - {savedAddress.pincode}
+          {savedAddress.city}, {savedAddress.state} -{" "}
+          {savedAddress.pincode}
           <br />
           📞 {savedAddress.mobile}
         </div>

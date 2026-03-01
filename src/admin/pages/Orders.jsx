@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import BASE_URL from "../../config/api"; // ✅ Deployment Base URL
 
 export default function Orders() {
   const [orders, setOrders] = useState([]);
@@ -8,7 +9,15 @@ export default function Orders() {
   // show only top 10 first
   const [visibleCount, setVisibleCount] = useState(10);
 
-  const getToken = () => localStorage.getItem("token");
+  // ✅ Token helper
+  const getToken = () => {
+    return (
+      localStorage.getItem("token") ||
+      localStorage.getItem("TOKEN") ||
+      localStorage.getItem("authToken") ||
+      ""
+    );
+  };
 
   // ✅ Convert yyyy-MM-dd -> dd-MM-yyyy (Backend expects this)
   const formatToDDMMYYYY = (dateStr) => {
@@ -42,7 +51,6 @@ export default function Orders() {
       shippingPartner: o.shippingPartner ?? o.shipping_partner ?? "",
       partnerContact: o.partnerContact ?? o.partner_contact ?? "",
 
-      // delivery date normalize
       expectedDelivery:
         o.expectedDelivery ?? o.expected_delivery ?? o.expectedDate ?? "",
     }));
@@ -54,7 +62,12 @@ export default function Orders() {
       setLoading(true);
       const token = getToken();
 
-      const res = await fetch("http://localhost:8080/api/orders", {
+      if (!token) {
+        alert("⚠️ Token missing. Please login again.");
+        return;
+      }
+
+      const res = await fetch(`${BASE_URL}/api/orders`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -67,7 +80,6 @@ export default function Orders() {
       const data = await res.json();
       setOrders(normalizeOrders(data));
 
-      // reset view count
       setVisibleCount(10);
     } catch (err) {
       console.error("Error loading orders:", err.message);
@@ -83,9 +95,7 @@ export default function Orders() {
       const token = getToken();
 
       const res = await fetch(
-        `http://localhost:8080/api/orders/search?query=${encodeURIComponent(
-          query
-        )}`,
+        `${BASE_URL}/api/orders/search?query=${encodeURIComponent(query)}`,
         {
           method: "GET",
           headers: {
@@ -100,7 +110,6 @@ export default function Orders() {
       const data = await res.json();
       setOrders(normalizeOrders(data));
 
-      // show top 10 of searched results also
       setVisibleCount(10);
     } catch (err) {
       console.error("Search error:", err.message);
@@ -109,7 +118,7 @@ export default function Orders() {
     }
   };
 
-  // ✅ Debounce search (wait 400ms then call API)
+  // ✅ Debounce search
   useEffect(() => {
     const timer = setTimeout(() => {
       if (!search.trim()) {
@@ -120,13 +129,11 @@ export default function Orders() {
     }, 400);
 
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
 
   // Load orders first time
   useEffect(() => {
     fetchOrders();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 🛠 Update local state
@@ -155,17 +162,14 @@ export default function Orders() {
         expectedDelivery: formatToDDMMYYYY(order.expectedDelivery),
       };
 
-      const res = await fetch(
-        `http://localhost:8080/api/orders/${order.id}`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        }
-      );
+      const res = await fetch(`${BASE_URL}/api/orders/${order.id}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
       if (!res.ok) {
         const text = await res.text();
@@ -180,7 +184,7 @@ export default function Orders() {
     }
   };
 
-  // ✅ Show only top visibleCount orders
+  // ✅ Show only visibleCount orders
   const visibleOrders = useMemo(() => {
     return orders.slice(0, visibleCount);
   }, [orders, visibleCount]);
@@ -272,7 +276,6 @@ export default function Orders() {
                       updateOrder(order.id, "shippingPartner", e.target.value)
                     }
                     className="border rounded-lg px-2 py-1 text-sm w-full"
-                    placeholder="BlueDart / Delhivery..."
                   />
                 </td>
 
@@ -284,7 +287,6 @@ export default function Orders() {
                       updateOrder(order.id, "partnerContact", e.target.value)
                     }
                     className="border rounded-lg px-2 py-1 text-sm w-full"
-                    placeholder="9876543210"
                   />
                 </td>
 
@@ -312,7 +314,7 @@ export default function Orders() {
               </tr>
             ))}
 
-            {/* EMPTY STATE */}
+            {/* EMPTY */}
             {orders.length === 0 && !loading && (
               <tr>
                 <td colSpan="13" className="px-4 py-6 text-center text-gray-500">
@@ -333,7 +335,7 @@ export default function Orders() {
         </table>
       </div>
 
-      {/* SEE MORE BUTTONS */}
+      {/* SEE MORE */}
       {orders.length > 10 && (
         <div className="flex justify-center gap-3">
           {visibleCount < orders.length && (

@@ -1,11 +1,10 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import BASE_URL from "../../config/api"; // ✅ Global Backend URL
 
 const WishlistContext = createContext(null);
 
-const BASE_URL = "http://localhost:8080/wishlist";
-
 export const WishlistProvider = ({ children }) => {
-  const [wishlist, setWishlist] = useState([]); // full objects from API
+  const [wishlist, setWishlist] = useState([]);
 
   /* 🔐 AUTH */
   const getAuth = () => ({
@@ -13,16 +12,17 @@ export const WishlistProvider = ({ children }) => {
     userId: localStorage.getItem("userId"),
   });
 
-  /* 🔁 LOAD WISHLIST FROM BACKEND */
+  /* 🔁 LOAD WISHLIST */
   const fetchWishlist = async () => {
     const { token, userId } = getAuth();
+
     if (!token || !userId) {
       setWishlist([]);
       return;
     }
 
     try {
-      const res = await fetch(BASE_URL, {
+      const res = await fetch(`${BASE_URL}/wishlist`, {
         headers: {
           Authorization: `Bearer ${token}`,
           userId,
@@ -55,7 +55,7 @@ export const WishlistProvider = ({ children }) => {
       if (existing) {
         // ❌ REMOVE
         const res = await fetch(
-          `${BASE_URL}/${existing.id}`,
+          `${BASE_URL}/wishlist/${existing.id}`,
           {
             method: "DELETE",
             headers: {
@@ -74,7 +74,7 @@ export const WishlistProvider = ({ children }) => {
       } else {
         // ➕ ADD
         const res = await fetch(
-          `${BASE_URL}/${product.id}`,
+          `${BASE_URL}/wishlist/${product.id}`,
           {
             method: "POST",
             headers: {
@@ -103,7 +103,7 @@ export const WishlistProvider = ({ children }) => {
 
     try {
       const res = await fetch(
-        `${BASE_URL}/${wishlistId}`,
+        `${BASE_URL}/wishlist/${wishlistId}`,
         {
           method: "DELETE",
           headers: {
@@ -146,13 +146,15 @@ export const WishlistProvider = ({ children }) => {
   );
 };
 
-/* HOOK */
+/* ✅ HOOK */
 export const useWishlistContext = () => {
   const context = useContext(WishlistContext);
+
   if (!context) {
     throw new Error(
       "useWishlistContext must be used inside WishlistProvider"
     );
   }
+
   return context;
 };

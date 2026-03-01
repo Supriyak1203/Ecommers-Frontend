@@ -2,8 +2,10 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function Signin({ setRole, setFullName }) {
-
   const navigate = useNavigate();
+
+  // ✅ Backend URL from .env (Vite)
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -19,10 +21,13 @@ export default function Signin({ setRole, setFullName }) {
     setPasswordError("");
 
     try {
-      const response = await fetch("http://localhost:8080/auth/login", {
+      // ✅ Use deployed backend URL instead of localhost
+      const response = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password })
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
       });
 
       if (!response.ok) {
@@ -33,27 +38,27 @@ export default function Signin({ setRole, setFullName }) {
 
       const data = await response.json();
 
-localStorage.setItem("email", data.email);
-localStorage.setItem("fullName", data.fullName);
-localStorage.setItem("userId", data.userId);
-localStorage.setItem("token", data.token);
-localStorage.setItem("role", data.role);
+      // ✅ Store user info in localStorage
+      localStorage.setItem("email", data.email);
+      localStorage.setItem("fullName", data.fullName);
+      localStorage.setItem("userId", data.userId);
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("role", data.role);
 
-
+      // ✅ Update role in App state
       setRole(data.role);
       setFullName(data.fullName);
 
       alert("Login Successful 🎉");
 
-      // 🚀 Router redirect
+      // ✅ Redirect based on role
       if (data.role === "ADMIN") {
         navigate("/admin");
       } else {
         navigate("/");
       }
-
     } catch (error) {
-      console.error(error);
+      console.error("Login Error:", error);
       alert("Server error. Please try again later.");
     }
   };
@@ -61,11 +66,9 @@ localStorage.setItem("role", data.role);
   return (
     <section className="flex items-center justify-center min-h-screen pt-24 bg-pink-50">
       <div className="bg-white w-full max-w-md p-8 rounded-2xl shadow-lg border border-pink-100">
-
         <Header title="Sign In" />
 
         <form className="space-y-4" onSubmit={handleSignin}>
-
           <Input
             label="Email Address"
             type="email"
@@ -79,6 +82,7 @@ localStorage.setItem("role", data.role);
             <p className="text-red-500 text-xs mt-1">{emailError}</p>
           )}
 
+          {/* Password Field */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Password
@@ -128,7 +132,6 @@ localStorage.setItem("role", data.role);
             Create Account
           </button>
         </div>
-
       </div>
     </section>
   );
@@ -139,9 +142,11 @@ localStorage.setItem("role", data.role);
 function Header({ title }) {
   return (
     <div className="text-center mb-6">
-      <div className="relative w-20 h-20 rounded-full bg-gradient-to-br 
+      <div
+        className="relative w-20 h-20 rounded-full bg-gradient-to-br 
         from-pink-500 via-pink-600 to-rose-500 
-        flex items-center justify-center shadow-xl ring-4 ring-pink-200 mx-auto mb-3">
+        flex items-center justify-center shadow-xl ring-4 ring-pink-200 mx-auto mb-3"
+      >
         <span className="absolute text-white text-3xl font-extrabold -translate-x-2">
           G
         </span>
@@ -149,6 +154,7 @@ function Header({ title }) {
           C
         </span>
       </div>
+
       <h1 className="text-3xl font-extrabold text-pink-600">{title}</h1>
     </div>
   );
@@ -160,6 +166,7 @@ function Input({ label, type, value, onChange }) {
       <label className="block text-sm font-medium text-gray-700 mb-1">
         {label}
       </label>
+
       <input
         type={type}
         value={value}

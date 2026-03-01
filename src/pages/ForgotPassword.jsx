@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import BASE_URL from "../config/api";   // ✅ Import Base URL
 
 export default function ForgotPassword() {
 
@@ -15,6 +16,8 @@ export default function ForgotPassword() {
   const [showNewPass, setShowNewPass] = useState(false);
   const [showConfirmPass, setShowConfirmPass] = useState(false);
 
+  const [loading, setLoading] = useState(false);
+
   // ================= SEND OTP =================
   const sendOtp = async () => {
 
@@ -26,8 +29,10 @@ export default function ForgotPassword() {
     }
 
     try {
+      setLoading(true);
+
       const res = await fetch(
-        `http://localhost:8080/auth/forgot-password/send/${cleanEmail}`,
+        `${BASE_URL}/auth/forgot-password/send/${cleanEmail}`,
         { method: "POST" }
       );
 
@@ -41,6 +46,8 @@ export default function ForgotPassword() {
 
     } catch {
       alert("Server error while sending OTP");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -55,8 +62,10 @@ export default function ForgotPassword() {
     }
 
     try {
+      setLoading(true);
+
       const res = await fetch(
-        `http://localhost:8080/auth/forgot-password/verify?email=${cleanEmail}&otp=${otp}`,
+        `${BASE_URL}/auth/forgot-password/verify?email=${cleanEmail}&otp=${otp}`,
         { method: "POST" }
       );
 
@@ -67,10 +76,12 @@ export default function ForgotPassword() {
       }
 
       setOtpVerified(true);
-      alert("OTP Verified Successfully!");
+      alert("OTP Verified Successfully ✅");
 
     } catch {
       alert("Server error while verifying OTP");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -105,8 +116,10 @@ export default function ForgotPassword() {
     }
 
     try {
+      setLoading(true);
+
       const res = await fetch(
-        `http://localhost:8080/auth/forgot-password/reset/${cleanEmail}`,
+        `${BASE_URL}/auth/forgot-password/reset/${cleanEmail}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -128,11 +141,13 @@ export default function ForgotPassword() {
 
     } catch {
       alert("Server error while resetting password");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <section className="flex items-center justify-center min-h-screen pt-24">
+    <section className="flex items-center justify-center min-h-screen pt-24 bg-pink-50">
       <div className="bg-white w-full max-w-md p-8 rounded-2xl shadow-lg border border-pink-100">
 
         <Header />
@@ -149,9 +164,10 @@ export default function ForgotPassword() {
           <button
             type="button"
             onClick={sendOtp}
-            className="w-full bg-pink-500 text-white py-2 rounded-xl"
+            disabled={loading}
+            className="w-full bg-pink-500 text-white py-2 rounded-xl disabled:opacity-50"
           >
-            Send OTP
+            {loading ? "Sending OTP..." : "Send OTP"}
           </button>
 
           <Input
@@ -164,9 +180,10 @@ export default function ForgotPassword() {
           <button
             type="button"
             onClick={verifyOtp}
-            className="w-full bg-green-500 text-white py-2 rounded-xl"
+            disabled={loading}
+            className="w-full bg-green-500 text-white py-2 rounded-xl disabled:opacity-50"
           >
-            Verify OTP
+            {loading ? "Verifying..." : "Verify OTP"}
           </button>
 
           <PasswordInput
@@ -187,8 +204,11 @@ export default function ForgotPassword() {
             disabled={!otpVerified}
           />
 
-          <button className="w-full bg-pink-600 text-white py-2.5 rounded-xl">
-            Reset Password
+          <button
+            disabled={loading}
+            className="w-full bg-pink-600 text-white py-2.5 rounded-xl disabled:opacity-50"
+          >
+            {loading ? "Resetting..." : "Reset Password"}
           </button>
 
         </form>
@@ -212,18 +232,6 @@ export default function ForgotPassword() {
 function Header() {
   return (
     <div className="text-center mb-6">
-      <div className="relative w-20 h-20 rounded-full bg-gradient-to-br 
-        from-pink-500 via-pink-600 to-rose-500 
-        flex items-center justify-center shadow-xl ring-4 ring-pink-200 mx-auto mb-3">
-
-        <span className="absolute text-white text-3xl font-extrabold -translate-x-2">
-          G
-        </span>
-        <span className="absolute text-white text-3xl font-extrabold translate-x-2">
-          C
-        </span>
-      </div>
-
       <h1 className="text-2xl font-bold text-pink-600">
         Forgot Password
       </h1>
@@ -267,7 +275,7 @@ function PasswordInput({ label, value, onChange, show, setShow, disabled }) {
           className="absolute right-3 top-2 cursor-pointer text-sm"
           onClick={() => setShow(!show)}
         >
-          {show ? "👁️" : "🙈"}
+          {show ? "🙈" : "👁️"}
         </span>
       </div>
     </div>

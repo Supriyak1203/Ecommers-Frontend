@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import BASE_URL from "../../config/api";
 
 const CartContext = createContext();
-const BASE_URL = "http://localhost:8080/cart";
 
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
@@ -9,14 +9,14 @@ export const CartProvider = ({ children }) => {
   const [gst, setGst] = useState(0);
   const [total, setTotal] = useState(0);
 
-  /* always read latest auth */
+  /* 🔐 Always read latest auth */
   const getAuth = () => ({
     token: localStorage.getItem("token"),
     userId: localStorage.getItem("userId"),
   });
 
   /* 🛒 CART COUNT */
-  const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const cartCount = cart.reduce((sum, item) => sum + (item.quantity || 0), 0);
 
   /* 🔁 LOAD CART */
   const fetchCart = async () => {
@@ -24,7 +24,7 @@ export const CartProvider = ({ children }) => {
     if (!token || !userId) return;
 
     try {
-      const res = await fetch(BASE_URL, {
+      const res = await fetch(`${BASE_URL}/cart`, {
         headers: {
           Authorization: `Bearer ${token}`,
           userId,
@@ -46,7 +46,7 @@ export const CartProvider = ({ children }) => {
       setGst(data.gst || 0);
       setTotal(data.grandTotal || 0);
     } catch (err) {
-      console.error("Fetch cart error:", err);
+      console.error("Fetch cart error:", err.message);
     }
   };
 
@@ -60,7 +60,7 @@ export const CartProvider = ({ children }) => {
     if (!token || !userId || !product?.id) return;
 
     try {
-      const res = await fetch(`${BASE_URL}/add/${product.id}`, {
+      const res = await fetch(`${BASE_URL}/cart/add/${product.id}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -77,7 +77,10 @@ export const CartProvider = ({ children }) => {
         }),
       });
 
-      if (!res.ok) throw new Error("Failed to add item");
+      if (!res.ok) {
+        const msg = await res.text();
+        throw new Error(msg || "Failed to add item");
+      }
 
       const data = await res.json();
 
@@ -86,7 +89,7 @@ export const CartProvider = ({ children }) => {
       setGst(data.gst || 0);
       setTotal(data.grandTotal || 0);
     } catch (err) {
-      console.error("Add cart error:", err);
+      console.error("Add cart error:", err.message);
     }
   };
 
@@ -97,7 +100,7 @@ export const CartProvider = ({ children }) => {
 
     try {
       const res = await fetch(
-        `${BASE_URL}/update/${cartId}?quantity=${qty}`,
+        `${BASE_URL}/cart/update/${cartId}?quantity=${qty}`,
         {
           method: "PUT",
           headers: {
@@ -116,7 +119,7 @@ export const CartProvider = ({ children }) => {
       setGst(data.gst || 0);
       setTotal(data.grandTotal || 0);
     } catch (err) {
-      console.error("Update cart error:", err);
+      console.error("Update cart error:", err.message);
     }
   };
 
@@ -126,7 +129,7 @@ export const CartProvider = ({ children }) => {
     if (!token || !userId) return;
 
     try {
-      const res = await fetch(`${BASE_URL}/remove/${cartId}`, {
+      const res = await fetch(`${BASE_URL}/cart/remove/${cartId}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -143,7 +146,7 @@ export const CartProvider = ({ children }) => {
       setGst(data.gst || 0);
       setTotal(data.grandTotal || 0);
     } catch (err) {
-      console.error("Remove cart error:", err);
+      console.error("Remove cart error:", err.message);
     }
   };
 
@@ -153,7 +156,7 @@ export const CartProvider = ({ children }) => {
     if (!token || !userId) return;
 
     try {
-      await fetch(`${BASE_URL}/clear`, {
+      await fetch(`${BASE_URL}/cart/clear`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -166,7 +169,7 @@ export const CartProvider = ({ children }) => {
       setGst(0);
       setTotal(0);
     } catch (err) {
-      console.error("Clear cart error:", err);
+      console.error("Clear cart error:", err.message);
     }
   };
 

@@ -7,6 +7,9 @@ import {
   TrendingUp,
 } from "lucide-react";
 
+// ✅ Import BASE_URL
+import BASE_URL from "../../config/api"; // adjust path if needed
+
 export default function Dashboard() {
   const [stats, setStats] = useState({
     totalCustomers: 0,
@@ -26,12 +29,17 @@ export default function Dashboard() {
     localStorage.getItem("authToken") ||
     "";
 
-  // ✅ FIXED Normalize orders (use backend keys properly)
+  // ✅ Normalize orders properly
   const normalizeOrders = (data = []) => {
     return (data || []).map((o) => ({
       orderId: o.orderId ?? o.order_id ?? o.id ?? "—",
       customer:
-        o.customer ?? o.full_name ?? o.fullName ?? o.username ?? o.name ?? "—",
+        o.customer ??
+        o.full_name ??
+        o.fullName ??
+        o.username ??
+        o.name ??
+        "—",
       status: o.status ?? "Pending",
       amount: o.amount ?? o.total ?? o.total_price ?? 0,
     }));
@@ -49,9 +57,9 @@ export default function Dashboard() {
           return;
         }
 
-        // ✅ 1) DASHBOARD STATS
+        // ✅ 1) DASHBOARD STATS API
         const statsRes = await fetch(
-          "http://localhost:8080/api/admin/dashboard",
+          `${BASE_URL}/api/admin/dashboard`,
           {
             method: "GET",
             headers: {
@@ -68,9 +76,9 @@ export default function Dashboard() {
         const statsData = await statsRes.json();
         setStats(statsData);
 
-        // ✅ 2) RECENT ORDERS
+        // ✅ 2) RECENT ORDERS API
         const ordersRes = await fetch(
-          "http://localhost:8080/api/admin/recent-orders",
+          `${BASE_URL}/api/admin/recent-orders`,
           {
             method: "GET",
             headers: {
@@ -85,10 +93,8 @@ export default function Dashboard() {
         }
 
         const ordersData = await ordersRes.json();
-
         console.log("✅ Recent Orders API Response:", ordersData);
 
-        // ✅ normalize here
         setOrders(normalizeOrders(ordersData));
       } catch (err) {
         console.error("Error fetching dashboard data:", err);
@@ -168,9 +174,9 @@ export default function Dashboard() {
 
       {/* RECENT ORDERS */}
       <div className="bg-white rounded-2xl shadow-md p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-800">Recent Orders</h3>
-        </div>
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">
+          Recent Orders
+        </h3>
 
         <div className="overflow-x-auto">
           <table className="w-full text-sm">

@@ -3,6 +3,7 @@ import { Heart } from "lucide-react";
 import { useCartContext } from "../context/CartContext";
 import { useWishlistContext } from "../context/WishlistContext";
 import axios from "axios";
+import BASE_URL from "../../config/api";
 
 const Products = () => {
   const [products, setProducts] = useState([]);
@@ -11,7 +12,7 @@ const Products = () => {
 
   useEffect(() => {
     axios
-      .get("http://localhost:8080/products")
+      .get(`${BASE_URL}/products`)
       .then((res) => setProducts(res.data))
       .catch((err) => console.error("Fetch products error:", err));
   }, []);
@@ -34,9 +35,9 @@ const Products = () => {
             {/* IMAGE */}
             <img
               src={
-                product.imageUrl.startsWith("data:")
-                  ? product.imageUrl // Already Base64
-                  : `data:image/jpeg;base64,${product.imageUrl}` // Convert blob/string to Base64
+                product.imageUrl?.startsWith("data:")
+                  ? product.imageUrl
+                  : `data:image/jpeg;base64,${product.imageUrl}`
               }
               alt={product.productName}
               className="h-56 w-full object-cover rounded-lg mb-4"
@@ -61,10 +62,14 @@ const Products = () => {
             <h3 className="text-lg font-semibold">{product.productName}</h3>
 
             {/* DESCRIPTION */}
-            <p className="text-gray-600 text-sm mt-1">{product.description}</p>
+            <p className="text-gray-600 text-sm mt-1">
+              {product.description}
+            </p>
 
             {/* PRICE */}
-            <p className="text-pink-600 font-bold mt-2">₹{product.price}</p>
+            <p className="text-pink-600 font-bold mt-2">
+              ₹{product.price}
+            </p>
 
             {/* ADD TO CART BUTTON */}
             <button
@@ -76,7 +81,9 @@ const Products = () => {
                   : "bg-pink-600 hover:bg-pink-700"
               }`}
             >
-              {isInCart(product.id) ? "Added to Cart" : "Add to Cart"}
+              {isInCart(product.id)
+                ? "Added to Cart"
+                : "Add to Cart"}
             </button>
           </div>
         ))}

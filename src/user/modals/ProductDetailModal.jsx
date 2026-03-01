@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { useCartContext } from "../context/CartContext";
 import { useWishlistContext } from "../context/WishlistContext";
+import BASE_URL from "../../config/api";
 
 const ProductDetailModal = ({ product, isOpen, onClose }) => {
   const { addToCart } = useCartContext();
@@ -11,7 +12,6 @@ const ProductDetailModal = ({ product, isOpen, onClose }) => {
 
   const userId = localStorage.getItem("userId");
   const token = localStorage.getItem("token");
-
 
   const availableStock = product?.stock ?? product?.quantity ?? 0;
 
@@ -37,22 +37,21 @@ const ProductDetailModal = ({ product, isOpen, onClose }) => {
   }, [isOpen, product]);
 
   const fetchReviews = async () => {
-  try {
-    const res = await axios.get(
-      `http://localhost:8080/api/feedback/product/${product.id}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    try {
+      const res = await axios.get(
+        `${BASE_URL}/api/feedback/product/${product.id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-    setReviews(res.data || []);
-  } catch (err) {
-    console.error("FETCH REVIEWS ERROR:", err);
-  }
-};
-
+      setReviews(res.data || []);
+    } catch (err) {
+      console.error("FETCH REVIEWS ERROR:", err);
+    }
+  };
 
   /* ================= CART ================= */
 
@@ -80,26 +79,22 @@ const ProductDetailModal = ({ product, isOpen, onClose }) => {
 
     try {
       const res = await axios.post(
-  "http://localhost:8080/api/feedback",
- {
-  userId: Number(userId),
-  productId: product.id,
-  category: product.category,   // 👈 ADD THIS
-  rating: ratingInput,
-  comment: reviewText,
-},
-
-  {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  }
-);
-
-      
+        `${BASE_URL}/api/feedback`,
+        {
+          userId: Number(userId),
+          productId: product.id,
+          category: product.category,
+          rating: ratingInput,
+          comment: reviewText,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       setReviews((prev) => [res.data, ...prev]);
-
       setRatingInput(0);
       setReviewText("");
     } catch (err) {

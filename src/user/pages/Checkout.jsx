@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCartContext } from "../context/CartContext";
 
-const BASE_URL = "http://localhost:8080/checkout";
+
+import BASE_URL from "../../config/api";
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -39,7 +40,7 @@ const Checkout = () => {
       const { token, userId } = getAuth();
 
       try {
-        const res = await fetch(`${BASE_URL}/summary`, {
+        const res = await fetch(`${BASE_URL}/checkout/summary`, {
           headers: {
             Authorization: `Bearer ${token}`,
             userId,
@@ -79,7 +80,7 @@ const Checkout = () => {
 
       try {
         const res = await fetch(
-          `http://localhost:8080/address/${userId}`,
+          `${BASE_URL}/address/${userId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -104,7 +105,7 @@ const Checkout = () => {
         }
 
         const profRes = await fetch(
-          `http://localhost:8080/api/profile/${userId}`,
+          `${BASE_URL}/api/profile/${userId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -139,8 +140,8 @@ const Checkout = () => {
     };
 
     const url = addressId
-      ? `http://localhost:8080/address/${addressId}`
-      : "http://localhost:8080/address/add";
+      ? `${BASE_URL}/address/${addressId}`
+      : `${BASE_URL}/address/add`;
 
     const method = addressId ? "PUT" : "POST";
 
@@ -174,7 +175,7 @@ const Checkout = () => {
       /* ================= COD ================= */
       if (paymentMode === "COD") {
         const res = await fetch(
-          "http://localhost:8080/api/orders/cod",
+          `${BASE_URL}/api/orders/cod`,
           {
             method: "POST",
             headers: {
@@ -203,7 +204,7 @@ const Checkout = () => {
       /* ================= ONLINE ================= */
       if (paymentMode === "UPI" || paymentMode === "CARD") {
         const orderRes = await fetch(
-          "http://localhost:8080/api/payment/create-order",
+          `${BASE_URL}/api/payment/create-order`,
           {
             method: "POST",
             headers: {
@@ -233,7 +234,7 @@ const Checkout = () => {
           order_id: data.orderId,
           handler: async function (response) {
             await fetch(
-              "http://localhost:8080/api/payment/verify",
+              `${BASE_URL}/api/payment/verify`,
               {
                 method: "POST",
                 headers: {

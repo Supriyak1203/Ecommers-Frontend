@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 
 const images = [
-  "/src/assets/products/home.jpg",
-  "/src/assets/products/home2.jpg",
-  "/src/assets/products/home3.jpg",
+  "https://res.cloudinary.com/docyokkvn/image/upload/v1772373733/home_bwarqi.png",
+  "https://res.cloudinary.com/docyokkvn/image/upload/v1772373725/home2_ufzjab.png",
+  "https://res.cloudinary.com/docyokkvn/image/upload/v1772373726/home3_icqppx.png",
 ];
 
 const Hero = () => {

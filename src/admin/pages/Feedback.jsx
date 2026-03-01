@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import BASE_URL from "../../config/api";// ✅ Deployment API Base URL
 
 export default function Feedback() {
   const [feedbacks, setFeedbacks] = useState([]);
@@ -67,11 +68,10 @@ export default function Feedback() {
       if (!token) {
         setError("⚠️ Token not found. Please login again.");
         setFeedbacks([]);
-        setLoading(false);
         return;
       }
 
-      const res = await fetch("http://localhost:8080/api/feedback", {
+      const res = await fetch(`${BASE_URL}/api/feedback`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -88,15 +88,12 @@ export default function Feedback() {
       }
 
       const data = await res.json();
-
       const normalized = (data || []).map(normalizeFeedback);
 
-      // ✅ Sort latest first (if backend gives date)
+      // ✅ Sort latest first
       normalized.sort((a, b) => new Date(b.date) - new Date(a.date));
 
       setFeedbacks(normalized);
-
-      // ✅ Reset visible count when reloading
       setVisibleCount(10);
     } catch (err) {
       setError(err.message || "Something went wrong");
@@ -117,12 +114,13 @@ export default function Feedback() {
       if (!token) {
         setError("⚠️ Token not found. Please login again.");
         setFeedbacks([]);
-        setLoading(false);
         return;
       }
 
       const res = await fetch(
-        `http://localhost:8080/api/feedback/search?productId=${productId}`,
+        `${BASE_URL}/api/feedback/search?productId=${encodeURIComponent(
+          productId
+        )}`,
         {
           method: "GET",
           headers: {
@@ -141,15 +139,12 @@ export default function Feedback() {
       }
 
       const data = await res.json();
-
       const normalized = (data || []).map(normalizeFeedback);
 
       // ✅ Sort latest first
       normalized.sort((a, b) => new Date(b.date) - new Date(a.date));
 
       setFeedbacks(normalized);
-
-      // ✅ Reset visible count on new search
       setVisibleCount(10);
     } catch (err) {
       setError(err.message || "Something went wrong");
@@ -193,11 +188,11 @@ export default function Feedback() {
   const visibleFeedbacks = filteredFeedbacks.slice(0, visibleCount);
 
   const handleShowMore = () => {
-    setVisibleCount((prev) => prev + 10); // add 10 more
+    setVisibleCount((prev) => prev + 10);
   };
 
   const handleShowLess = () => {
-    setVisibleCount(10); // back to top 10
+    setVisibleCount(10);
   };
 
   return (

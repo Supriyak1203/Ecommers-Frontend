@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 
+// ✅ Import BASE_URL
+import BASE_URL from "../../config/api";
+
 /*
   CRM = Customer Relationship Management
   Shows registered customers from backend (Admin Protected)
@@ -11,8 +14,8 @@ export default function CRM() {
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
 
-  // ✅ Get token from localStorage (same like other admin pages)
-  const token = localStorage.getItem("token"); // or "adminToken" if you saved like that
+  // ✅ Get token from localStorage
+  const token = localStorage.getItem("token");
 
   // ✅ Common fetch helper
   const fetchWithAuth = async (url) => {
@@ -24,12 +27,12 @@ export default function CRM() {
       },
     });
 
-    // If unauthorized, stop and show message
+    // Unauthorized
     if (res.status === 401) {
       throw new Error("Unauthorized (401). Please login as Admin again.");
     }
 
-    // If server error
+    // Other server error
     if (!res.ok) {
       throw new Error(`Server Error: ${res.status}`);
     }
@@ -39,14 +42,14 @@ export default function CRM() {
     return text ? JSON.parse(text) : [];
   };
 
-  // Fetch all customers
+  // ✅ Fetch all customers
   const fetchCustomers = async () => {
     try {
       setLoading(true);
       setErrorMsg("");
 
       const data = await fetchWithAuth(
-        "http://localhost:8080/api/admin/crm/customers"
+        `${BASE_URL}/api/admin/crm/customers`
       );
 
       setCustomers(Array.isArray(data) ? data : []);
@@ -59,17 +62,17 @@ export default function CRM() {
     }
   };
 
-  // Search customers (backend)
+  // ✅ Search customers (backend)
   const searchCustomers = async (keyword) => {
     try {
       setLoading(true);
       setErrorMsg("");
 
       const url = keyword
-        ? `http://localhost:8080/api/admin/crm/search?keyword=${encodeURIComponent(
+        ? `${BASE_URL}/api/admin/crm/search?keyword=${encodeURIComponent(
             keyword
           )}`
-        : "http://localhost:8080/api/admin/crm/customers";
+        : `${BASE_URL}/api/admin/crm/customers`;
 
       const data = await fetchWithAuth(url);
       setCustomers(Array.isArray(data) ? data : []);
@@ -82,12 +85,12 @@ export default function CRM() {
     }
   };
 
-  // Initial load
+  // ✅ Initial load
   useEffect(() => {
     fetchCustomers();
   }, []);
 
-  // Search handler
+  // ✅ Search handler
   const handleSearch = (e) => {
     const value = e.target.value;
     setSearch(value);

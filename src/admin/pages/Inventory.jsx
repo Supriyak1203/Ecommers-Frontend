@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import BASE_URL from "../../config/api";
 
 export default function Inventory() {
   const [products, setProducts] = useState([]);
@@ -20,15 +21,14 @@ export default function Inventory() {
     images: [],
   });
 
-  const token = localStorage.getItem("token"); // JWT token from login
+  const token = localStorage.getItem("token");
 
   /* ================== LOAD PRODUCTS ================== */
   const fetchProducts = async () => {
     try {
-      const res = await fetch("http://localhost:8080/products", {
+      const res = await fetch(`${BASE_URL}/products`, {
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -47,7 +47,9 @@ export default function Inventory() {
         usage: p.usage,
         details: p.details,
         quantity: p.quantity,
-        createdAt: p.createdAt ? new Date(p.createdAt).toLocaleDateString() : "",
+        createdAt: p.createdAt
+          ? new Date(p.createdAt).toLocaleDateString()
+          : "",
         images: p.imageUrl ? [p.imageUrl] : [],
       }));
 
@@ -58,9 +60,15 @@ export default function Inventory() {
     }
   };
 
+  /* ================== TOKEN GUARD ================== */
   useEffect(() => {
+    if (!token) {
+      alert("Session expired. Please login again.");
+      window.location.href = "/signin";
+      return;
+    }
     fetchProducts();
-  }, []);
+  }, [token]);
 
   /* ================== INPUT HANDLER ================== */
   const handleChange = (e) => {
@@ -69,41 +77,37 @@ export default function Inventory() {
 
   /* ================== IMAGE UPLOAD ================== */
   const handleImages = async (e) => {
-  const files = Array.from(e.target.files);
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
 
-  if (!files.length) return;
+    const uploadedUrls = [];
 
-  const uploadedUrls = [];
+    for (const file of files) {
+      const formData = new FormData();
+      formData.append("file", file);
 
-  for (const file of files) {
-    const formData = new FormData();
-    formData.append("file", file);
+      const res = await fetch(`${BASE_URL}/products/upload`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
 
-    const res = await fetch("http://localhost:8080/products/upload", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      body: formData,
-    });
+      if (!res.ok) {
+        alert("Image upload failed");
+        return;
+      }
 
-    if (!res.ok) {
-      alert("Image upload failed");
-      return;
+      const data = await res.json();
+      uploadedUrls.push(data.imageUrl);
     }
 
-    const data = await res.json();
-
-    // ✅ backend returns { imageUrl: "http://..." }
-    uploadedUrls.push(data.imageUrl);
-  }
-
-  setForm((prev) => ({
-    ...prev,
-    images: [...prev.images, ...uploadedUrls],
-  }));
-};
-
+    setForm((prev) => ({
+      ...prev,
+      images: [...prev.images, ...uploadedUrls],
+    }));
+  };
 
   /* ================== SAVE PRODUCT ================== */
   const handleSave = async () => {
@@ -124,35 +128,25 @@ export default function Inventory() {
     };
 
     try {
-      let res;
-      if (editId) {
-        // UPDATE
-        res = await fetch(`http://localhost:8080/products/${editId}`, {
-          method: "PUT",
+      const res = await fetch(
+        editId
+          ? `${BASE_URL}/products/${editId}`
+          : `${BASE_URL}/products/add`,
+        {
+          method: editId ? "PUT" : "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(payload),
-        });
-      } else {
-        // ADD
-        res = await fetch("http://localhost:8080/products/add", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
-          },
-          body: JSON.stringify(payload),
-        });
-      }
+        }
+      );
 
       if (res.status === 401) throw new Error("Unauthorized: Please login");
       if (!res.ok) throw new Error("Failed to save product");
 
       await fetchProducts();
 
-      // reset form
       setForm({
         productId: "",
         name: "",
@@ -164,6 +158,7 @@ export default function Inventory() {
         quantity: "",
         images: [],
       });
+
       setEditId(null);
       setShowForm(false);
     } catch (err) {
@@ -174,7 +169,18 @@ export default function Inventory() {
 
   /* ================== EDIT ================== */
   const editProduct = (product) => {
-    setForm(product);
+    setForm({
+      productId: product.productId,
+      name: product.name,
+      category: product.category,
+      price: product.price,
+      description: product.description,
+      usage: product.usage,
+      details: product.details,
+      quantity: product.quantity,
+      images: product.images || [],
+    });
+
     setEditId(product.id);
     setShowForm(true);
   };
@@ -184,10 +190,10 @@ export default function Inventory() {
     if (!window.confirm("Delete this product?")) return;
 
     try {
-      const res = await fetch(`http://localhost:8080/products/${id}`, {
+      const res = await fetch(`${BASE_URL}/products/${id}`, {
         method: "DELETE",
         headers: {
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -214,22 +220,20 @@ export default function Inventory() {
   /* ================== RENDER ================== */
   return (
     <div className="space-y-6">
-
-      {/* HEADER */}
       <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-pink-700">Inventory</h1>
-        </div>
+        <h1 className="text-3xl font-bold text-pink-700">Inventory</h1>
 
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}
-            className="bg-pink-600 text-white px-6 py-2 rounded-lg shadow hover:bg-pink-700 transition"
+            className="bg-pink-600 text-white px-6 py-2 rounded-lg shadow hover:bg-pink-700"
           >
             + Add Product
           </button>
         )}
       </div>
+
+     
 
       {/* ================= FORM ================= */}
       {showForm && (
@@ -365,12 +369,16 @@ export default function Inventory() {
                 {visibleProducts.map((p) => (
                   <tr key={p.id} className="border-b hover:bg-pink-50">
                     <td className="px-4 py-2">
-                      {p.images?.[0] && (
-                        <img
-                          src={p.images[0]}
-                          className="w-14 h-14 rounded-lg object-cover"
-                        />
-                      )}
+                     
+                  <img
+  src={
+    p.images?.[0] && p.images[0].startsWith("http")
+      ? p.images[0]
+      : "https://placehold.co/56x56?text=No+Image"
+  }
+  alt={p.name}
+  className="w-14 h-14 rounded-lg object-cover"
+/>
                     </td>
                     <td className="px-4 py-2">{p.productId}</td>
                     <td className="px-4 py-2 font-medium">{p.name}</td>

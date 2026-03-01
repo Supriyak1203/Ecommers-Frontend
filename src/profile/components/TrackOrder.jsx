@@ -1,34 +1,34 @@
 import { useEffect, useState } from "react";
 
-export default function TrackOrder({ orderId, back }) {
+/* ✅ Global Backend URL */
+import BASE_URL from "../../config/api";
 
+export default function TrackOrder({ orderId, back }) {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-
     if (!orderId) return;
 
     const token = localStorage.getItem("token");
 
-    fetch(`http://localhost:8080/api/orders/${orderId}`, {
+    fetch(`${BASE_URL}/api/orders/${orderId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     })
-      .then(res => {
+      .then((res) => {
         if (!res.ok) {
           throw new Error("Track fetch failed");
         }
         return res.json();
       })
-      .then(data => {
+      .then((data) => {
         console.log("TRACK ORDER:", data);
         setOrder(data);
       })
-      .catch(err => console.error("TRACK ERROR:", err))
+      .catch((err) => console.error("TRACK ERROR:", err))
       .finally(() => setLoading(false));
-
   }, [orderId]);
 
   if (!orderId) {
@@ -49,7 +49,6 @@ export default function TrackOrder({ orderId, back }) {
 
   return (
     <div>
-
       {/* BACK */}
       <button
         onClick={back}
@@ -64,7 +63,6 @@ export default function TrackOrder({ orderId, back }) {
 
       {/* TRACK CARD */}
       <div className="border rounded-xl p-6 bg-white space-y-4">
-
         <div className="flex justify-between">
           <p className="font-semibold">
             Order #{order.id}
@@ -76,7 +74,6 @@ export default function TrackOrder({ orderId, back }) {
         </div>
 
         <div className="grid grid-cols-2 gap-4 text-sm">
-
           <p>
             <span className="font-semibold">Courier:</span>{" "}
             {order.shippingPartner || "Not assigned yet"}
@@ -93,9 +90,7 @@ export default function TrackOrder({ orderId, back }) {
             </span>{" "}
             {order.expectedDelivery || "To be updated"}
           </p>
-
         </div>
-
       </div>
     </div>
   );

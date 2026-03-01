@@ -1,24 +1,24 @@
 import { useEffect, useState } from "react";
 
-export default function OrderDetails({ orderId, back }) {
+/* ✅ Global Backend URL */
+import BASE_URL from "../../config/api";
 
+export default function OrderDetails({ orderId, back }) {
   const [order, setOrder] = useState(null);
 
   useEffect(() => {
-
     if (!orderId) return;
 
     const token = localStorage.getItem("token");
 
-    fetch(`http://localhost:8080/api/orders/${orderId}`, {
+    fetch(`${BASE_URL}/api/orders/${orderId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     })
-      .then(res => res.json())
+      .then((res) => res.json())
       .then(setOrder)
       .catch(console.error);
-
   }, [orderId]);
 
   if (!orderId) return <p className="text-red-600">Order ID missing</p>;
@@ -26,7 +26,6 @@ export default function OrderDetails({ orderId, back }) {
 
   return (
     <div>
-
       {/* BACK */}
       <button
         onClick={back}
@@ -41,34 +40,30 @@ export default function OrderDetails({ orderId, back }) {
 
       {/* TOP CARD */}
       <div className="border rounded-xl p-6 bg-white mb-6">
-
         <div className="flex justify-between items-center mb-4">
-
           <p className="font-semibold text-lg">
             Order #{order.id}
           </p>
 
           <span
-  className={`px-3 py-1 rounded-full text-xs font-medium
-    ${
-      order.status === "Completed"
-        ? "bg-green-100 text-green-600"
-        : order.status === "Pending" || order.status === "PLACED"
-        ? "bg-yellow-100 text-yellow-600"
-        : order.status === "Shipped" || order.status === "SHIPPED"
-        ? "bg-blue-100 text-blue-600"
-        : order.status === "Paid" || order.status === "PAID"
-        ? "bg-green-100 text-green-700"
-        : "bg-red-100 text-red-600"
-    }`}
->
-  {order.status}
-</span>
-
+            className={`px-3 py-1 rounded-full text-xs font-medium
+              ${
+                order.status === "Completed"
+                  ? "bg-green-100 text-green-600"
+                  : order.status === "Pending" || order.status === "PLACED"
+                  ? "bg-yellow-100 text-yellow-600"
+                  : order.status === "Shipped" || order.status === "SHIPPED"
+                  ? "bg-blue-100 text-blue-600"
+                  : order.status === "Paid" || order.status === "PAID"
+                  ? "bg-green-100 text-green-700"
+                  : "bg-red-100 text-red-600"
+              }`}
+          >
+            {order.status}
+          </span>
         </div>
 
         <div className="flex gap-5">
-
           {/* PRODUCT IMAGE */}
           <img
             src={order.imageUrl || "https://via.placeholder.com/100"}
@@ -77,7 +72,6 @@ export default function OrderDetails({ orderId, back }) {
           />
 
           <div className="flex-1">
-
             <p className="font-semibold">
               {order.productName}
             </p>
@@ -93,15 +87,12 @@ export default function OrderDetails({ orderId, back }) {
             <p className="text-sm text-gray-500">
               Payment: {order.paymentOption || "Online"}
             </p>
-
           </div>
-
         </div>
       </div>
 
       {/* DELIVERY */}
       <div className="border rounded-xl p-6 bg-white">
-
         <h3 className="font-semibold mb-3">
           Delivery Address
         </h3>
@@ -116,9 +107,7 @@ export default function OrderDetails({ orderId, back }) {
             {order.expectedDelivery || "To be updated"}
           </span>
         </p>
-
       </div>
-
     </div>
   );
 }

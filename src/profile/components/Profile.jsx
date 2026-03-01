@@ -1,5 +1,6 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
+import BASE_URL from "../../config/api"; // ✅ Global Backend URL
 
 export default function Profile() {
 
@@ -27,9 +28,8 @@ export default function Profile() {
   // ================= USER =================
 
   const fetchUser = async () => {
-
     const res = await axios.get(
-      `http://localhost:8080/api/users/${USER_ID}`,
+      `${BASE_URL}/api/users/${USER_ID}`,
       { headers: { Authorization: `Bearer ${token}` } }
     );
 
@@ -42,84 +42,78 @@ export default function Profile() {
 
   // ================= PROFILE =================
 
- const fetchProfile = async () => {
+  const fetchProfile = async () => {
+    const res = await axios.get(
+      `${BASE_URL}/api/profile/${USER_ID}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
 
-  const res = await axios.get(
-    `http://localhost:8080/api/profile/${USER_ID}`,
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
+    const p = res.data;
 
-  const p = res.data;
+    setGender(p?.gender || "");
+    setAge(p?.age || "");
+    setImage(p?.imageUrl || null);
 
-  setGender(p?.gender || "");
-  setAge(p?.age || "");
-  setImage(p?.imageUrl || null);
-
-  // ✅ sync sidebar
-  if (p?.imageUrl) {
-    localStorage.setItem("profileImage", p.imageUrl);
-  }
-};
-
+    // ✅ sync sidebar image
+    if (p?.imageUrl) {
+      localStorage.setItem("profileImage", p.imageUrl);
+    }
+  };
 
   // ================= SAVE =================
 
   const saveProfile = async () => {
+    try {
 
-  try {
+      // 🔥 UPDATE USERS
+      await axios.put(
+        `${BASE_URL}/api/users/${USER_ID}`,
+        {
+          fullName: name,
+          email,
+          mobileNumber: mobile,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-    // 🔥 UPDATE USERS
-    await axios.put(
-      `http://localhost:8080/api/users/${USER_ID}`,
-      {
-        fullName: name,
-        email,
-        mobileNumber: mobile,
-      },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+      // 🔥 UPDATE PROFILE
+      await axios.post(
+        `${BASE_URL}/api/profile/save`,
+        {
+          userId: USER_ID,
+          gender,
+          age,
+          imageUrl: image,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-    // 🔥 UPDATE PROFILE
-    await axios.post(
-      "http://localhost:8080/api/profile/save",
-      {
-        userId: USER_ID,
-        gender,
-        age,
-        imageUrl: image,
-      },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+      // ✅ STORE IMAGE FOR SIDEBAR
+      if (image) {
+        localStorage.setItem("profileImage", image);
+      }
 
-    // ✅ STORE IMAGE FOR SIDEBAR
-    if (image) {
-      localStorage.setItem("profileImage", image);
+      // 🔥 TRIGGER SIDEBAR REFRESH
+      window.dispatchEvent(new Event("profileUpdated"));
+
+      alert("Profile updated successfully ✅");
+
+      loadAll();
+
+    } catch (err) {
+      console.error("SAVE ERROR:", err);
+      alert("Update failed ❌");
     }
-
-    // 🔥 TRIGGER SIDEBAR REFRESH
-    window.dispatchEvent(new Event("profileUpdated"));
-
-    alert("Profile updated successfully ✅");
-
-    loadAll();
-
-  } catch (err) {
-    console.error("SAVE ERROR:", err);
-    alert("Update failed");
-  }
-};
+  };
 
   // ================= IMAGE =================
 
   const uploadPhoto = (e) => {
-
     const file = e.target.files[0];
     if (!file) return;
 
     const reader = new FileReader();
-
     reader.onload = () => setImage(reader.result);
-
     reader.readAsDataURL(file);
   };
 
@@ -131,7 +125,7 @@ export default function Profile() {
 
       {/* IMAGE */}
       <div className="text-center mb-6">
-        <div className="w-28 h-28 mx-auto rounded-full overflow-hidden border bg-gray-100">
+        <div className="w-28 h-28 mx-auto rounded-full overflow-hidden border bg-gray-100 flex items-center justify-center">
 
           {image ? (
             <img src={image} className="w-full h-full object-cover" />

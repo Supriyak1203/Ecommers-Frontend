@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import BASE_URL from "../../config/api"; // adjust path if needed
 
 export default function Payments() {
   const [payments, setPayments] = useState([]);
@@ -56,7 +57,7 @@ export default function Payments() {
         return;
       }
 
-      const res = await fetch("http://localhost:8080/api/admin/payments", {
+     const res = await fetch(`${BASE_URL}/api/admin/payments`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -103,8 +104,8 @@ export default function Payments() {
         return;
       }
 
-      const res = await fetch(
-        `http://localhost:8080/api/admin/payments/search?keyword=${encodeURIComponent(
+       const res = await fetch(
+        `${BASE_URL}/api/admin/payments/search?keyword=${encodeURIComponent(
           keyword
         )}`,
         {

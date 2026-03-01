@@ -4,9 +4,10 @@ import { useNavigate } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
 import { useWishlistContext } from "../context/WishlistContext";
 import ProductDetailModal from "../modals/ProductDetailModal";
+import BASE_URL from "../../config/api";
 
 const Wishlist = () => {
-  // ✅ NEW backend-driven wishlist
+  // ✅ Backend-driven wishlist
   const { wishlist } = useWishlistContext();
 
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -18,7 +19,7 @@ const Wishlist = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch("http://localhost:8080/products");
+        const res = await fetch(`${BASE_URL}/products`);
         const data = await res.json();
         setProducts(data || []);
       } catch (err) {

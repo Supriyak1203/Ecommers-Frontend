@@ -3,6 +3,9 @@ import { useNavigate } from "react-router-dom";
 import Hero from "../components/Hero";
 import ProductGrid from "../components/ProductGrid";
 
+/* ✅ IMPORT BASE URL */
+import BASE_URL from "../../config/api";
+
 const Home = ({ searchText, sortOrder, category }) => {
   const navigate = useNavigate();
 
@@ -11,19 +14,24 @@ const Home = ({ searchText, sortOrder, category }) => {
 
   /* 📦 FETCH PRODUCTS FROM BACKEND */
   useEffect(() => {
-    fetch("http://localhost:8080/products")
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch products");
-        return res.json();
-      })
-      .then((data) => {
+    const fetchProducts = async () => {
+      try {
+        const res = await fetch(`${BASE_URL}/products`);
+
+        if (!res.ok) {
+          throw new Error("Failed to fetch products");
+        }
+
+        const data = await res.json();
         setProducts(data || []);
-        setLoading(false);
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error("Fetch products error:", err);
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+
+    fetchProducts();
   }, []);
 
   /* ✅ HANDLE PRODUCT CLICK */
@@ -51,11 +59,12 @@ const Home = ({ searchText, sortOrder, category }) => {
     );
   }
 
-  // SORT
+  // SORT LOW TO HIGH
   if (sortOrder === "low") {
     filteredProducts.sort((a, b) => a.price - b.price);
   }
 
+  // SORT HIGH TO LOW
   if (sortOrder === "high") {
     filteredProducts.sort((a, b) => b.price - a.price);
   }
