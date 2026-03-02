@@ -108,15 +108,28 @@ export default function Profile() {
 
   // ================= IMAGE =================
 
-  const uploadPhoto = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  const uploadPhoto = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = () => setImage(reader.result);
-    reader.readAsDataURL(file);
-  };
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", "profile_upload"); // 👈 your preset name
 
+  try {
+    const res = await axios.post(
+      "https://api.cloudinary.com/v1_1/docyokkvn/image/upload",
+      formData
+    );
+
+    // ✅ THIS is the Cloudinary URL
+    setImage(res.data.secure_url);
+
+  } catch (error) {
+    console.error("Cloudinary upload error", error);
+    alert("Image upload failed");
+  }
+};
   // ================= UI =================
 
   return (

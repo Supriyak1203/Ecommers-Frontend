@@ -53,25 +53,17 @@ export default function App() {
 
   const isProfilePage = location.pathname.startsWith("/profile");
 
-  /* ================= AUTH CHECK ================= */
+  /* ================= LOAD AUTH FROM STORAGE ================= */
 
   useEffect(() => {
     const name = localStorage.getItem("fullName");
     const savedRole = localStorage.getItem("role");
 
-    const publicRoutes = ["/signin", "/signup", "/forgot"];
-
-    if (publicRoutes.includes(location.pathname)) {
-      return;
-    }
-
     if (name && savedRole) {
       setFullName(name);
       setRole(savedRole);
-    } else {
-      navigate("/signin");
     }
-  }, [navigate, location.pathname]);
+  }, []);
 
   /* ================= LOGOUT ================= */
 
@@ -82,7 +74,7 @@ export default function App() {
     navigate("/signin");
   };
 
-  /* ================= ADMIN VIEW ================= */
+  /* ================= ADMIN LAYOUT ================= */
 
   if (role === "ADMIN") {
     return (
@@ -104,6 +96,7 @@ export default function App() {
               <Route path="/admin/payments" element={<Payments />} />
               <Route path="/admin/feedback" element={<Feedback />} />
               <Route path="/admin/profile" element={<AdminProfile />} />
+              <Route path="*" element={<Dashboard />} />
             </Routes>
           </div>
         </div>
@@ -111,7 +104,7 @@ export default function App() {
     );
   }
 
-  /* ================= PUBLIC + USER VIEW ================= */
+  /* ================= USER + PUBLIC ================= */
 
   return (
     <div className="bg-pink-50 min-h-screen">
@@ -122,7 +115,7 @@ export default function App() {
           <div className="max-w-7xl mx-auto px-6 py-3 flex justify-between items-center">
             <div
               className="flex items-center gap-3 cursor-pointer"
-              onClick={() => navigate("/signup")}
+              onClick={() => navigate("/")}
             >
               <div className="w-10 h-10 rounded-full bg-pink-500 flex items-center justify-center text-white font-bold">
                 GC
@@ -166,53 +159,72 @@ export default function App() {
       <main className={isProfilePage ? "pt-0" : "pt-20"}>
         <ScrollToTop />
 
-        {/* 🔐 AUTH ROUTES */}
-        {!role && (
-          <Routes>
-            <Route
-              path="/signin"
-              element={<Signin setRole={setRole} setFullName={setFullName} />}
-            />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/forgot" element={<ForgotPassword />} />
-            <Route
-              path="*"
-              element={<Signin setRole={setRole} setFullName={setFullName} />}
-            />
-          </Routes>
-        )}
+        {/* ================= ROUTES (ALWAYS RENDERED) ================= */}
+        <Routes>
 
-        {/* 🛍️ USER ROUTES */}
-        {role === "USER" && (
-          <Routes>
-            <Route
-              path="/"
-              element={
+          {/* AUTH */}
+          <Route
+            path="/signin"
+            element={<Signin setRole={setRole} setFullName={setFullName} />}
+          />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/forgot" element={<ForgotPassword />} />
+
+          {/* USER */}
+          <Route
+            path="/"
+            element={
+              role === "USER" ? (
                 <Home
                   openCheckout={() => setShowCheckout(true)}
                   searchText={searchText}
                   sortOrder={sortOrder}
                   category={category}
                 />
-              }
-            />
+              ) : (
+                <Signin setRole={setRole} setFullName={setFullName} />
+              )
+            }
+          />
 
-            <Route path="/wishlist" element={<Wishlist />} />
-            <Route path="/product/:id" element={<ProductDetails />} />
-            <Route path="/checkout" element={<Checkout />} />
+          <Route
+            path="/wishlist"
+            element={role === "USER" ? <Wishlist /> : <Signin />}
+          />
 
-            {/* 👤 PROFILE */}
-            <Route
-              path="/profile"
-              element={<ProfilePage onLogout={handleLogout} />}
-            />
-          </Routes>
-        )}
+          <Route
+            path="/product/:id"
+            element={role === "USER" ? <ProductDetails /> : <Signin />}
+          />
+
+          <Route
+            path="/checkout"
+            element={role === "USER" ? <Checkout /> : <Signin />}
+          />
+
+          <Route
+            path="/profile"
+            element={
+              role === "USER" ? (
+                <ProfilePage onLogout={handleLogout} />
+              ) : (
+                <Signin />
+              )
+            }
+          />
+
+          {/* FALLBACK */}
+          <Route
+            path="*"
+            element={<Signin setRole={setRole} setFullName={setFullName} />}
+          />
+        </Routes>
       </main>
 
-      {/* 👇 FOOTER */}
+      {/* FOOTER */}
       {role === "USER" && !isProfilePage && <Footer />}
 
+      {/* MODALS */}
       {role === "USER" && (
         <>
           <CartSidebar isOpen={showCart} onClose={() => setShowCart(false)} />

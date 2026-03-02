@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import BASE_URL from "../config/api";   // ✅ Import Base URL
+import BASE_URL from "../config/api"; // ✅ Import Base URL
 
 export default function ForgotPassword() {
 
